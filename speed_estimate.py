@@ -24,20 +24,45 @@ def get_weight(W,road,Un,Ue):
     #A = [val for val in Un if val != road]
     A = list(set(Un)&set(all_road_info[road][-1]))
     UnS = [val for val in Un if val in SEED]
+    AS = [val for val in A if val in SEED]
+    A_S  = [val for val in A if val not in SEED]
     #print A
     #print UnS
+    if len(AS) == 0:
+        print '111'
+        return W
+    
+    elif len(AS) >= len(set(A_S)):
+        print '222'
+        Un = UnS
+        A = AS
+        #W = weight_learning(road,Un,Ue,W,theta,lamda,Tcon,v_diff_temp)
+    else:
+        print '333'
+        for road1 in A_S:
+            Un1,Ue1 = traffic_trend.create_graph(road1)         #???bug
+            #print Un1
+            A1 = list(set(Un1)&set(all_road_info[road1][-1]))
+            A1S = list(set(A1)&set(SEED))
+            A1_S = list(set(A1)-set(SEED))
+            if len(A1S) == 0 or len(A1S) < len(A1_S): #1表示road1本身
+                Un = list(set(Un)-set([road1]))
+                A = list(set(A)-set([road1]))
+    A_S = [val for val in A if val not in SEED]
+    UnS = [val for val in Un if val in SEED]
     for road1 in A:
         W[road1] = random()
-    for road_l in UnS:
-        for road_j in A:
+    for road_j in A_S:
+        for road_l in UnS:
             if [road_l,road_j] in Ue or [road_j,road_l] in Ue:
                 #格式road1-road2
                 W[road_l+'-'+road_j] = random()
     print 'w-----'
+    print A
     print UnS
     print W
     print road
-    print A
+    
     return W
 
 #求UnS中的速度差异
@@ -61,7 +86,7 @@ def speed_diff(W,road,Un,Ue,v_diff):
     #1-hop相关邻居
     A = list(set(Un)&set(all_road_info[road][-1]))
     
-    UnS = [val for val in Un if val in SEED]
+    
     
     AS = [val for val in A if val in SEED]
     #W = get_weight(road)
@@ -73,19 +98,21 @@ def speed_diff(W,road,Un,Ue,v_diff):
     #W = get_weight({},road,Un,Ue)
     
     if len(AS) == 0:
+        print '11'
         v_diff[road] = 0
-    elif len(AS) > len(set(A_S)):
-        Un = UnS
+    elif len(AS) >= len(set(A_S)):
         A = AS
+        print '22'
         #W = weight_learning(road,Un,Ue,W,theta,lamda,Tcon,v_diff_temp)
     else:
-        for road1 in A:
+        print '33'
+        for road1 in A_S:
             Un1,Ue1 = traffic_trend.create_graph(road1)         #???bug
             #print Un1
             A1 = list(set(Un1)&set(all_road_info[road1][-1]))
             A1S = list(set(A1)&set(SEED))
             A1_S = list(set(A1)-set(SEED))
-            if len(A1S) == 0 or len(A1S) < len(A1_S)-1: #1表示road1本身
+            if len(A1S) == 0 or len(A1S) < len(A1_S): #1表示road1本身
                 Un = list(set(Un)-set([road1]))
                 A = list(set(A)-set([road1]))
                 #W = weight_learning(road1,Un1,Ue1,W,theta,lamda,Tcon,v_diff_temp)
@@ -94,7 +121,9 @@ def speed_diff(W,road,Un,Ue,v_diff):
     
     #UnS = [val for val in Un if val in SEED]
     #A = list(set(Un)&set(all_road_info[road][-1]))
-    #print A
+    print A
+    A_S = [val for val in A if val not in SEED]
+    UnS = [val for val in Un if val in SEED]
     for road_j in A:
         if road_j in SEED:
             #print road_j
@@ -110,6 +139,7 @@ def speed_diff(W,road,Un,Ue,v_diff):
     #print diff_est
     #print W
     #A会发生改变?
+    print '1-----'
     print A
     print W
     print diff_est
@@ -253,18 +283,19 @@ def speed_est(road,v_diff_temp,theta,lamda,Tcon,v_diff_):
     A_S = [val for val in A if val not in SEED]
     #W = get_weight({},road,Un,Ue)
     #print W
+    
     if len(AS) == 0:
         print '1'
         #v_diff_temp[road][date] = 0
         return v_equal
-    elif len(AS) > len(A_S):
+    elif len(AS) >= len(A_S):
         print '2'
         Un = UnS
         A = AS
         #W = weight_learning(road,Un,Ue,W,theta,lamda,Tcon,v_diff_temp)
     else:
         print '3'
-        for road1 in list(set(Un)-set(road)):
+        for road1 in A_S:
             
             Un1,Ue1 = traffic_trend.create_graph(road1)         #???bug
             A1 = list(set(Un1)&set(all_road_info[road][-1]))
@@ -277,13 +308,14 @@ def speed_est(road,v_diff_temp,theta,lamda,Tcon,v_diff_):
                 A = list(set(A)-set([road1]))
                 print A
     print A
+    
     W = get_weight({},road,Un,Ue)
     #print W
     if len(UnS) == 0:
         return v_equal
-    print "----"
-    print Un
+    print "2----"
     print A
+    print Un
     print W
     W = weight_learning(road,Un,Ue,W,theta,lamda,Tcon,v_diff_)    
     print 'W------'
