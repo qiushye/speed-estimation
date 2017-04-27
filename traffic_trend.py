@@ -23,6 +23,8 @@ for road_ in all_road_info.keys():
     fw.write(road_+'\n')
 '''
 def create_graph(road):
+    if road in SEED:
+        exit -1
     onehop_neighbor = all_road_info[road][-1]
     twohop_neighbor = set()
     #求2-hop邻居
@@ -31,22 +33,33 @@ def create_graph(road):
         twohop_neighbor = twohop_neighbor|set(all_road_info[road1][-1])
     twohop_neighbor = twohop_neighbor-set([road])
     
-    road_neighbor = list(set(set(onehop_neighbor)|twohop_neighbor))
+    #road_neighbor = list(set(set(onehop_neighbor)|twohop_neighbor))
     Ue = []
     Un = []
     R1 = 0
     R2 = 0
-    for rec in road_neighbor:
+    
+    for rec in onehop_neighbor:
         if seed.get_road_R(rec,road,all_road_info,c_weekday_d,c_weekend_d,threshold) == (1,1):
             Un.append(rec)
+            Ue.append([road,rec])
+    A1 = Un
     Un.append(road)
-    for set1 in Un:
-        for set2 in Un:
-                if set1 != set2:
-                    R1,R2 = seed.get_road_R(set1,set2,all_road_info,c_weekday_d,c_weekend_d,threshold)
-                    
-                    if R1 == 1 and R2 == 1 and [set2,set1] not in Ue:
-                        Ue.append([set1,set2])
+    A2 = []
+    for road1 in A1:
+        temp_neighbor = all_road_info[road1][-1]
+        for road2 in temp_neighbor:
+            if road2 in SEED and road2 not in Un and seed.get_road_R(road1,road2,all_road_info,c_weekday_d,c_weekend_d,threshold) == (1,1):
+                Un.append(road2)
+                A2.append(road2)
+                Ue.append([road1,road2])
+    for set1 in A1:
+        for set2 in A1:
+            if set1 != set2:
+                R1,R2 = seed.get_road_R(set1,set2,all_road_info,c_weekday_d,c_weekend_d,threshold)
+                if R1 == 1 and R2 == 1 and [set2,set1] not in Ue:
+                    Ue.append([set1,set2])
+                
     return Un,Ue
 #只考虑工作日
 def potential(road1,road2,delta_v1,delta_v2):
