@@ -320,12 +320,7 @@ def speed_est(road,v_diff_temp,theta,lamda,Tcon,v_diff_):
     W = weight_learning(road,Un,Ue,W,theta,lamda,Tcon,v_diff_)    
     print 'W------'
     print W
-    '''
-    if len(UnS) > 0:
-        for key in v_diff_temp.keys():
-            if key not in SEED:
-                v_diff_temp[key] = 0.0
-    '''
+    
     
     v_diff = speed_diff(W,road,Un,Ue,v_diff_temp)
     v_diff_temp[road] = v_diff
@@ -355,9 +350,12 @@ date_choose = choose_date(SEED,traffic_trend.period)
 v_est_all = {}
 global v_diff_equal
 v_diff_equal = {}
+v_equal1 = {}
 v_diff1 = {}
+v_diff2 = {}
 v_diff0 = {}
 v_diff_temp = {}
+v_temp1 = {}
 v_diff_ori = {}
 non_seed_road = [val for val in all_road if val not in SEED]
 NSR_order = []
@@ -366,15 +364,14 @@ accu_rate ={}
 
 for road in non_seed_road:
     #v_est_all[road] = 0
+    v_temp1[road] = 0
     seed_num[road] = 0
     accu_rate[road] = 0
 for road in SEED:
     v_diff1[road] = 0
     v_diff0[road] = 0
-    v_est_all[road] = 0
+    #v_est_all[road] = 0
     v_diff_temp[road] = {}
-
-    
 
 for road1 in SEED:
     for date in c_weekday_d:
@@ -393,6 +390,28 @@ for road1 in SEED:
         v_diff1[road1] += v_diff_temp[road1][date]
 for road1 in SEED:
     v_diff_equal[road1] = v_diff1[road1]/len(date_choose)
+#非种子的实际速度
+period = traffic_trend.period
+for road1 in non_seed_road:
+    date_num = 0
+    for date in date_choose:
+        with open(traffic_trend.road_id_dir+road1+'.txt','r') as f:
+            v = 0
+            for line in f:
+                record = line.strip().split(',')
+                if record[7] == date:
+                    if int(record[9]) - int(period) == -1:
+                        temp_v = float(record[6])
+                    elif record[9] == period:
+                        v = float(record[6])
+                        temp_v = 0
+                    elif int(record[9]) - int(period) == 1 and temp_v != 0 and float(record[6]) - temp_v < 4:
+                        v = (temp_v + float(record[6]))/2 
+                    v_temp1[road1] += v
+                    if v != 0:
+                        date_num += 1
+    print date_num
+    v_equal1[road1] = v_temp1[road1]/date_num
     
 #记录非种子路段的Un中的种子个数
 for road in non_seed_road:
@@ -430,13 +449,18 @@ for road in non_seed_road:
         
             #v = speed_est(road,v_diff_temp,theta,lamda,Tcon)
             v_est_all[road] = v
-'''
+                
+equal_num = 0                     
+for road in non_seed_road:
+    if v_est_all[road] == all_road_info[road][4]:
+        equal_num += 1
+
 accu_rate_sum = 0
 for road in non_seed_road:
-    accu_rate[road] = abs(v_est_all[road]-all_road_info[road][4])
-    accu_rate_sum += accu_rate[road]/all_road_info[road][4]
+    accu_rate[road] = abs(v_est_all[road]-v_equal1[road])
+    accu_rate_sum += accu_rate[road]/v_equal1[road]
 mape = accu_rate_sum/len(non_seed_road)
-'''
+
 
 '''
 print speed_est('59567211550',v_diff_equal,theta,lamda,Tcon)
