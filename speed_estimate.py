@@ -416,8 +416,9 @@ for road1 in non_seed_road:
 #记录非种子路段的Un中的种子个数
 for road in non_seed_road:
     Un1,Ue1 = traffic_trend.create_graph(road)
-    UnS1 = [val for val in Un1 if val in SEED]
-    seed_num[road] = len(UnS1)
+    A1 = list(set(Un1)&set(all_road_info[road][-1]))
+    A1S = [val for val in A1 if val in SEED]
+    seed_num[road] = len(A1S)
 '''
 value = list(seed_num.values()).sort(reverse = True)
 for i in value:
@@ -459,8 +460,18 @@ accu_rate_sum = 0
 for road in non_seed_road:
     accu_rate[road] = abs(v_est_all[road]-v_equal1[road])
     accu_rate_sum += accu_rate[road]/v_equal1[road]
-mape = accu_rate_sum/len(non_seed_road)
+mape = accu_rate_sum/(len(non_seed_road))
 
+accu_rate_real = {}
+arsr = 0
+arsr_num = 0
+for road in non_seed_road:
+    if seed_num[road] != 0:
+        accu_rate_real[road] = abs(v_est_all[road]-v_equal1[road])
+        arsr += accu_rate_real[road]/v_equal1[road]
+        arsr_num += 1
+mape_real = arsr/arsr_num
+print mape_real
 
 '''
 print speed_est('59567211550',v_diff_equal,theta,lamda,Tcon)
